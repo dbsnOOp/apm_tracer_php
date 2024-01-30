@@ -1,0 +1,24 @@
+{
+    "name": "dbsnoop/tracer",
+    "type": "kubrary",
+    "autoload": {
+        "psr-4": {
+            "dbsnOOp\\": "src/"
+        },
+        "files": [
+            "src/functions.php",
+            "src/parameters.php"
+        ]
+    },
+    "require": {
+        "firebase/php-jwt": "^6.3",
+        "guzzlehttp/guzzle": "^7.5"
+        
+    },
+    "authors": [
+        {
+            "name": "Rodrigo Danieli",
+            "email": "rodrigo.danieli@dbsnoop.com"
+        }
+    ]
+}
