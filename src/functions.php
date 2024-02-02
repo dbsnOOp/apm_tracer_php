@@ -94,6 +94,7 @@ function add_trace_function(string $function_name, array $opt)
     \uopz_set_return($function_name, function (...$args) use ($function_name, $opt) {
         $tracker = Tracer::initTracker();
         $tracker->object = $function_name;
+        $tracker->function = $function_name;
         if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
             call_user_func_array($opt['pre_exec'], [&$tracker, $args]);
         Tracer::startTrack($tracker->_id());
@@ -130,6 +131,8 @@ function add_trace_method(string $class_name, string $method_name, array $opt)
         $method_reflection = new ReflectionMethod($class_name, $method_name);
         $obj = $method_reflection->isStatic() ?  NULL : $this;
         $track = Tracer::initTracker();
+        $track->function = $method_name;
+        $track->class = $class_name;
         if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
             call_user_func_array($opt['pre_exec'], [&$track, $args, $obj]);
         Tracer::startTrack($track->_id());

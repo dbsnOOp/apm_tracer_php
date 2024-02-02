@@ -175,7 +175,15 @@ class Tracer
 
         self::stopChilds($id);
         self::$trackers[$id]->finish();
-        self::sendRequest(self::$trackers[$id]);
+        if(self::$_mode === INTEGRAL_MODE || self::$_mode === INTEGRAL_DEBUG_MODE)
+        {
+            self::sendRequest(self::$trackers[$id]);
+        }
+
+        if(self::$_mode === TRACK_ONLY_DEBUG_MODE || self::$_mode === INTEGRAL_DEBUG_MODE)
+        {
+            var_dump(self::$trackers[$id]->getStats());
+        }
         unset(self::$trackers[$id]);
     }
 

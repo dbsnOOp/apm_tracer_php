@@ -37,6 +37,8 @@ final class PDOIntegration extends Integration
                 "pos_exec" => function ($tracker, $args, $result, $that) {
                     list($query) = $args;
                     $tracker->type = TYPE_APP_DATABASE_QUERY;
+                    $tracker->resource = "query";
+                    $tracker->object = "PDO::query";
                     $info = ObjectMaps::get($that, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
                         echo "Create Exec" . PHP_EOL;
@@ -81,6 +83,8 @@ final class PDOIntegration extends Integration
             [
                 "pos_exec" => function ($tracker, $args, $result,$that) {
                     list($query) = $args;
+                    $tracker->resource = "query";
+                    $tracker->object = "PDO::exec";
                     $tracker->type = TYPE_APP_DATABASE_QUERY;
                     $info = ObjectMaps::get($that, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
@@ -126,6 +130,8 @@ final class PDOIntegration extends Integration
                     if (!$pdo) {
                         return;
                     }
+                    $tracker->resource = "query";
+                    $tracker->object = "PDOStatement::execute";
                     $info = ObjectMaps::get($pdo, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
                         $port = "3306";

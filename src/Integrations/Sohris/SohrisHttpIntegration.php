@@ -19,8 +19,9 @@ final class SohrisHttpIntegration extends Integration
             "__invoke",
             [
                 "pos_exec" => function ($tracker, $args) {
-                    $tracker->object = "SohrisHttp";
-                    $tracker->type = TYPE_APP_WEB;
+                    $tracker->object = "SohrisHttp::request";
+                    $tracker->resource = "request";
+                    $tracker->type = \dbsnOOp\TYPE_APP_WEB;
                     if ($args[0] instanceof  \Psr\Http\Message\ResponseInterface) {
                         $tracker->info['web_uri'] = $args[0]->getRequestTarget();
                         $tracker->info['web_response_code'] = $args[0]->getStatusCode();

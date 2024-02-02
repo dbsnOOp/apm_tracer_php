@@ -123,6 +123,8 @@ final class MysqliIntegration extends Integration
             [
                 "pos_exec" => function ($tracker, $args, $result) {
                     list($mysqli, $query) = $args;
+                    $tracker->resource = "query";
+                    $tracker->object = "mysqli_query";
                     $tracker->type = TYPE_APP_DATABASE_QUERY;
                     $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
                     $info[DB_QUERY] = $query;
@@ -149,6 +151,8 @@ final class MysqliIntegration extends Integration
             [
                 "pos_exec" => function ($tracker, $args, $result) {
                     list($mysqli) = $args;
+                    $tracker->resource = "query";
+                    $tracker->object = "mysqli_stmt_execute";
                     $tracker->type = TYPE_APP_DATABASE_QUERY;
                     $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
                     $info[QUERY_NUM_ROWS] = mysqli_stmt_affected_rows($result);
@@ -164,6 +168,8 @@ final class MysqliIntegration extends Integration
             [
                 "pos_exec" => function ($tracker, $args, $result) {
                     list($query) = $args;
+                    $tracker->resource = "query";
+                    $tracker->object = "mysqli::query";
                     $tracker->type = TYPE_APP_DATABASE_QUERY;
                     $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
                     $info[DB_QUERY] = $query;
@@ -192,6 +198,8 @@ final class MysqliIntegration extends Integration
             [
                 "pos_exec" => function ($tracker, $args, $result) {
                     list($mysqli) = $args;
+                    $tracker->resource = "query";
+                    $tracker->object = "mysqli_stmt::execute";
                     $tracker->type = TYPE_APP_DATABASE_QUERY;
                     $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
                     $info[QUERY_NUM_ROWS] = $result->affected_rows;

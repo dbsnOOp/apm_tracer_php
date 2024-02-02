@@ -6,9 +6,13 @@ final class Tracker
 {
 
     public string $object = "";
+    public string $resource = "";
     public array $tags = [];
     public string $type = TYPE_APP_DEFAULT;
     public array $info = [];
+
+    public string $function = "";
+    public string $class = "";
 
     private int $_id = 0;
     private int $_app_id = 0;
@@ -55,10 +59,16 @@ final class Tracker
 
     public function getStats(): array
     {
+        $func =  array_slice(debug_backtrace(1,0),4);
+        $func[0]['function'] = $this->function;
+
         $status = [
             "_id" => $this->_id,
             "_app_id" => $this->_app_id,
             "_parent_id" => $this->_parent_id,
+            "object" => $this->object,
+            "resource" => $this->resource,
+            "trace" => $func,
             "type" => $this->type,
             "tags" => $this->tags,
             "info" => $this->info,
