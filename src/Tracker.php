@@ -10,9 +10,9 @@ final class Tracker
     public string $type = TYPE_APP_DEFAULT;
     public array $info = [];
 
-    private int $_id;
-    private int $_app_id;
-    private int $_parent_id;
+    private int $_id = 0;
+    private int $_app_id = 0;
+    private int $_parent_id = 0;
 
     private int $start = 0;
     private int $end = 0;
@@ -32,6 +32,11 @@ final class Tracker
     public function _id()
     {
         return $this->_id;
+    }
+
+    public function _parent_id()
+    {
+        return $this->_parent_id;
     }
 
     public function start()

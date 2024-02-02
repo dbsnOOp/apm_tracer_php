@@ -13,9 +13,4 @@ abstract class Integration
      */
     abstract public function integrate();
 
-    
-
-
-
-
 }

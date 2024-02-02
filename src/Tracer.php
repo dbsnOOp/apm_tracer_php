@@ -3,10 +3,12 @@
 namespace dbsnOOp;
 
 use Closure;
+use dbsnOOp\Integrations\Loader;
 use Exception;
 use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Promise\Promise;
 use Throwable;
 
 class Tracer
@@ -35,6 +37,7 @@ class Tracer
         self::$current_track = self::$_id;
         self::$_tracker = new Tracker(self::$_id, self::$_id);
         self::$_tracker->type = TYPE_APP_INIT_APP;
+        Loader::init();
         self::$_tracker->start();
 
         set_error_handler(function (...$err) {
@@ -77,7 +80,8 @@ class Tracer
             self::sendRequest(self::$_tracker);
             if (!empty(self::$requests)) {
                 foreach (self::$requests as $request) {
-                    $request->wait();
+                    if ($request instanceof Promise)
+                        $request->wait();
                 }
             }
         });
@@ -156,11 +160,23 @@ class Tracer
         self::$trackers[$id]->finish();
     }
 
+    private static function stopChilds(string $id)
+    {
+        foreach (self::$trackers as $child_id => $child) {
+            if ($child->_parent_id() == $id) {
+                self::finishTrack($child_id);
+                return;
+            }
+        }
+    }
+
     public static function finishTrack(string $id)
     {
 
+        self::stopChilds($id);
         self::$trackers[$id]->finish();
         self::sendRequest(self::$trackers[$id]);
+        unset(self::$trackers[$id]);
     }
 
     public static function closeTrack(string $id)
@@ -193,11 +209,11 @@ class Tracer
     private static function sendRequest(Tracker $tracker)
     {
         try {
+            echo "SEND" . PHP_EOL;
             $body = [];
             $body = self::utf8_encode_rec($tracker->getStats());
             if (!empty($body))
                 $body = ['data' => JWT::encode($body, self::$_hash, "HS256")];
-
             $opt = array(
                 "headers" => array(
                     "Content-Type" => "application/json",
@@ -208,7 +224,7 @@ class Tracer
             $client = new Client([
                 "base_uri" => self::$_uri,
             ]);
-            self::$requests[] = $client->requestAsync("POST", "/apm/send", $opt);
+            self::$requests[] = $client->request("POST", "/apm/send", $opt);
         } catch (ClientException $e) {
             return false;
         } catch (Exception $e) {
