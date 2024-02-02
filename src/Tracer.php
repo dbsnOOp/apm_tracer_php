@@ -94,7 +94,6 @@ class Tracer
     {
 
         if (!getenv('DBSNOOP_APM_MODE')) {
-            trigger_error("The 'DBSNOOP_APM_MODE' is not defined. Assumed INTEGRAL_MODE ", E_USER_NOTICE);
             return false;
         } else {
             switch (getenv('DBSNOOP_APM_MODE')) {

@@ -80,15 +80,24 @@ final class Tracker
 
     public function getStats(): array
     {
+        
         $trace = [];
-        $backtrack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
-        foreach ($backtrack as $key => $backtrack) {
-            if ($backtrack['file'] == $this->clear_path . DIRECTORY_SEPARATOR . "functions.php") {
+        $backtrack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        if($this->type == TYPE_APP_DEFAULT)
+        {
+            var_dump($backtrack);
+        }
+        foreach ($backtrack as $key => $btrack) {
+            if (
+                $btrack['file'] == $this->clear_path . DIRECTORY_SEPARATOR . "functions.php" &&
+                $btrack['function'] == "dbsnOOp\\resolve_result"
+            ) {
                 $trace = array_slice($backtrack, $key + 1);
+                break;
             }
         }
 
-        $func[0]['function'] = $this->function;
+        $trace[0]['function'] = $this->function;
 
         $status = [
             "type" => $this->type,
@@ -103,10 +112,10 @@ final class Tracker
                 "_class" => $trace[0]['class']
             ],
             "times" => [
-                    "start" => $this->start,
-                    "end" => $this->end,
-                    "duration" => $this->finished ? $this->end - $this->start : 0,
-                    "duration_ns" => $this->finished ? $this->ns_end - $this->ns_start : 0
+                "start" => $this->start,
+                "end" => $this->end,
+                "duration" => $this->finished ? $this->end - $this->start : 0,
+                "duration_ns" => $this->finished ? $this->ns_end - $this->ns_start : 0
             ],
             "object" => $this->object,
             "resource" => $this->resource,
