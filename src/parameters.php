@@ -32,7 +32,7 @@ const TRACK_ONLY_DEBUG_MODE = 3;
 
 
 //INFO Names
-const DB_TRANSACTION = "database_in_trnsaction";
+const DB_TRANSACTION = "database_in_transaction";
 const DB_HOST = "database_host";
 const DB_PORT = "database_port";
 const DB_NAME = "database_name";
