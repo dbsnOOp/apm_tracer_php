@@ -209,7 +209,6 @@ class Tracer
     private static function sendRequest(Tracker $tracker)
     {
         try {
-            echo "SEND" . PHP_EOL;
             $body = [];
             $body = self::utf8_encode_rec($tracker->getStats());
             if (!empty($body))
