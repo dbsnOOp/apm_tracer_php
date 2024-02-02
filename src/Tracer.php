@@ -85,7 +85,6 @@ class Tracer
                 }
             }
         });
-
         self::$_active = true;
         self::sendRequest(self::$_tracker);
     }

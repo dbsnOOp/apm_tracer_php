@@ -41,7 +41,6 @@ final class PDOIntegration extends Integration
                     $tracker->object = "PDO::query";
                     $info = ObjectMaps::get($that, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
-                        echo "Create Exec" . PHP_EOL;
                         $port = "3306";
                         $info = $that->getAttribute(\PDO::ATTR_CONNECTION_STATUS);
                         $server_version = $that->getAttribute(\PDO::ATTR_SERVER_VERSION);

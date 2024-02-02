@@ -83,10 +83,6 @@ final class Tracker
         
         $trace = [];
         $backtrack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-        if($this->type == TYPE_APP_DEFAULT)
-        {
-            var_dump($backtrack);
-        }
         foreach ($backtrack as $key => $btrack) {
             if (
                 $btrack['file'] == $this->clear_path . DIRECTORY_SEPARATOR . "functions.php" &&
@@ -109,7 +105,8 @@ final class Tracker
                 "_file" => $trace[0]['file'],
                 "_line" => $trace[0]['line'],
                 "_function" => $trace[0]['function'],
-                "_class" => $trace[0]['class']
+                "_class" => $trace[0]['class'],
+                "_script_file" => $trace[count($trace) - 1]['file']
             ],
             "times" => [
                 "start" => $this->start,
