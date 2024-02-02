@@ -91,7 +91,7 @@ function add_trace_function(string $function_name, array $opt)
         return;
         throw new Exception("Function $function_name() not found!");
     }
-    uopz_set_return($function_name, function (...$args) use ($function_name, $opt) {
+    \uopz_set_return($function_name, function (...$args) use ($function_name, $opt) {
         $tracker = Tracer::initTracker();
         $tracker->object = $function_name;
         if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
@@ -126,7 +126,7 @@ function add_trace_method(string $class_name, string $method_name, array $opt)
         trigger_error("Method $class_name::$method_name() not found", E_USER_ERROR);
         return;
     }
-    uopz_set_return($class_name, $method_name, function (...$args) use ($class_name, $method_name, $opt) {
+    \uopz_set_return($class_name, $method_name, function (...$args) use ($class_name, $method_name, $opt) {
         $method_reflection = new ReflectionMethod($class_name, $method_name);
         $obj = $method_reflection->isStatic() ?  NULL : $this;
         $track = Tracer::initTracker();
@@ -162,7 +162,7 @@ function add_hook_function(string $function_name, array $opt)
         //throw new Exception("Function $function_name() not found!");
         return;
     }
-    uopz_set_return($function_name, function (...$args) use ($function_name, $opt) { 
+    \uopz_set_return($function_name, function (...$args) use ($function_name, $opt) { 
         if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
             call_user_func_array($opt['pre_exec'], [$args]);
         $result = $function_name(...$args);
@@ -186,7 +186,7 @@ function add_hook_method(string $class_name, string $method_name, array $opt)
         trigger_error("Method $class_name::$method_name() not found", E_USER_ERROR);
         return;
     }
-    uopz_set_return($class_name, $method_name, function (...$args) use ($class_name, $method_name, $opt) {
+    \uopz_set_return($class_name, $method_name, function (...$args) use ($class_name, $method_name, $opt) {
         $method_reflection = new ReflectionMethod($class_name, $method_name);
         $obj = $method_reflection->isStatic() ?  NULL : $this;
         if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
