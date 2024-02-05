@@ -9,6 +9,7 @@ use Firebase\JWT\JWT;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Promise\Promise;
+use SplStack;
 use Throwable;
 
 class Tracer
@@ -18,32 +19,49 @@ class Tracer
     private static string $_uri;
     private static string $_token;
     private static Tracker $_tracker;
-    private static bool $_active = false;
     private static int $_mode = 0;
 
-    private static Closure $_user_exception_handler;
-    private static Closure $_user_error_handler;
-    private static Closure $_user_shutdown_handler;
-    private static int $_user_error_level = E_ALL;
-
-    private static array $trackers = [];
-    private static string $current_track;
+    private static SplStack $trackers;
+    private static Tracker $current_track;
     private static array $requests = [];
 
     public static function init()
     {
         if (!self::setEnvirounment()) return;
+        self::$trackers = new SplStack;
         self::$_id = random_int(1000000000, 9999999999);
-        self::$current_track = self::$_id;
-        self::$_tracker = new Tracker(self::$_id, self::$_id);
+        self::$_tracker = new Tracker(self::$_id);
+        self::$trackers->push(self::$_tracker);
+        self::$trackers->rewind();
+        self::$current_track = self::$_tracker;
         self::$_tracker->type = TYPE_APP_INIT_APP;
+        self::$_tracker->resource = "dbsnOOp/Tracer";
         Loader::init();
         self::$_tracker->start();
 
         set_error_handler(function (...$err) {
+            if (!(error_reporting() & $err[0])) {
+                return false;
+            }
             self::setEnvirounment();
             $tracker = new Tracker(self::$_id, self::$current_track);
             $tracker->start();
+            switch ($err[0]) {
+                case E_USER_ERROR:
+                case E_ERROR:
+                    $tracker->type = TYPE_TRIGGER_ERROR;
+                    break;
+                case E_USER_WARNING:
+                case E_WARNING:
+                    $tracker->type = TYPE_TRIGGER_WARNING;
+                    break;
+                case E_USER_NOTICE:
+                case E_NOTICE:
+                    $tracker->type = TYPE_TRIGGER_NOTICE;
+                    break;
+                default:
+                    return;
+            }
             $tracker->info = [
                 "no" => $err[0],
                 "str" => $err[1],
@@ -51,11 +69,8 @@ class Tracer
                 "line" => $err[3]
             ];
             $tracker->finish();
-            // if (is_callable(self::$_user_error_handler)) {
-            //     self::$_user_error_handler(...$err);
-            // }
+            self::sendRequest($tracker);
         });
-
         set_exception_handler(function (Throwable $e) {
             self::setEnvirounment();
             $tracker = new Tracker(self::$_id, self::$current_track);
@@ -68,11 +83,8 @@ class Tracer
                 "trace" => $e->getTraceAsString()
             ];
             $tracker->finish();
-            // if (is_callable(self::$_user_exception_handler)) {
-            //     self::$_user_exception_handler(...$err);
-            // }
+            self::sendRequest($tracker);
         });
-
         register_shutdown_function(function () {
             self::setEnvirounment();
             self::$_tracker->type = TYPE_APP_FINISH_APP;
@@ -85,7 +97,6 @@ class Tracer
                 }
             }
         });
-        self::$_active = true;
         self::sendRequest(self::$_tracker);
     }
 
@@ -136,85 +147,57 @@ class Tracer
     public static function initTracker()
     {
         $track = new Tracker(self::$_id, self::$current_track);
-        self::$current_track = $track->_id();
-        self::$trackers[self::$current_track] = $track;
+        self::$current_track->addChild($track);
+        self::$trackers->push($track);
+        self::$trackers->rewind();
+        self::$current_track = self::$trackers->current();
         return $track;
     }
 
-    public static function getTracker(string $id)
+    public static function getTracker()
     {
-        if (isset(self::$trackers[$id]))
-            return self::$trackers[$id];
-        return false;
+        return self::$current_track;
     }
 
-    public static function startTrack(string $id)
+    public static function startTrack()
     {
-        self::$trackers[$id]->start();
+        self::$current_track->start();
     }
 
-    public static function stopTrack(string $id)
+    public static function stopTrack()
     {
-        self::$trackers[$id]->finish();
+        self::$current_track->finish();
     }
 
-    private static function stopChilds(string $id)
+    private static function stopChilds(Tracker $ref)
     {
-        foreach (self::$trackers as $child_id => $child) {
-            if ($child->_parent_id() == $id) {
-                self::finishTrack($child_id);
-                return;
+        foreach ($ref->getChilds() as $child) {
+            if (!empty($child->getChilds())) {
+                self::stopChilds($child);
             }
+            $child->finish();
         }
     }
 
-    public static function finishTrack(string $id)
+    public static function finishTrack()
     {
-
-        self::stopChilds($id);
-        self::$trackers[$id]->finish();
-        if(self::$_mode === INTEGRAL_MODE || self::$_mode === INTEGRAL_DEBUG_MODE)
-        {
-            self::sendRequest(self::$trackers[$id]);
-        }
-
-        if(self::$_mode === TRACK_ONLY_DEBUG_MODE || self::$_mode === INTEGRAL_DEBUG_MODE)
-        {
-            //var_dump(self::$trackers[$id]->getStats());
-        }
-        unset(self::$trackers[$id]);
-    }
-
-    public static function closeTrack(string $id)
-    {
-        self::$trackers[self::$current_track]->finish();
-        unset(self::$trackers[$id]);
-    }
-
-    public static function getTrackStats(string $id)
-    {
-        return self::$trackers[self::$current_track]->getStats();
-    }
-
-    public static function setErrorHandler(Closure $callback, int $error_levels = E_ALL)
-    {
-        self::$_user_error_level = $error_levels;
-        self::$_user_error_handler = $callback;
-    }
-
-    public static function setExceptionHandler(Closure $callback)
-    {
-        self::$_user_exception_handler = $callback;
-    }
-
-    public static function setShutdownHandler(Closure $callback)
-    {
-        self::$_user_shutdown_handler = $callback;
+        self::stopChilds(self::$current_track);
+        self::$current_track->finish();
+        self::sendRequest(self::$current_track);
+        self::$trackers->pop();
+        self::$trackers->rewind();
+        self::$current_track = self::$trackers->current();
     }
 
     private static function sendRequest(Tracker $tracker)
     {
         try {
+            if (self::$_mode === TRACK_ONLY_DEBUG_MODE || self::$_mode === INTEGRAL_DEBUG_MODE) {
+                //var_dump(self::$current_track->getStats());
+            }
+            if (self::$_mode !== INTEGRAL_MODE && self::$_mode !== INTEGRAL_DEBUG_MODE) {
+                return;
+            }
             $body = [];
             $body = self::utf8_encode_rec($tracker->getStats());
             if (!empty($body))

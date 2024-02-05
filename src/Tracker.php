@@ -2,6 +2,8 @@
 
 namespace dbsnOOp;
 
+use SplStack;
+
 final class Tracker
 {
 
@@ -17,7 +19,7 @@ final class Tracker
 
     private int $_id = 0;
     private int $_app_id = 0;
-    private int $_parent_id = 0;
+    private Tracker $_parent;
 
     private int $start = 0;
     private int $end = 0;
@@ -27,12 +29,19 @@ final class Tracker
 
     private array $init_stats = [];
     private array $end_stats = [];
+    private array $childs = [];
+    private Tracker $current_child;
 
 
-    public function __construct(int $app_id, int $parent_id)
+    public function __construct(int $app_id, $parent = null)
     {
         $this->_id = random_int(1000000000, 9999999999);
-        $this->_parent_id = $parent_id;
+
+        if (isset($parent)) {
+            $this->_parent = $parent;
+        } else {
+            $this->_parent = $this;
+        }
         $this->_app_id = $app_id;
         $this->clear_path = dirname(__FILE__);
     }
@@ -42,9 +51,14 @@ final class Tracker
         return $this->_id;
     }
 
-    public function _parent_id()
+    public function _parent(): Tracker
     {
-        return $this->_parent_id;
+        return $this->_parent;
+    }
+
+    public function _app_id()
+    {
+        return $this->_app_id;
     }
 
     public function start()
@@ -55,8 +69,11 @@ final class Tracker
         $this->init_stats = getrusage();
     }
 
+
+
     public function finish()
     {
+        if($this->finished) return ;
         $this->ns_end = hrtime(true);
         $this->end = time();
         $this->end_stats = getrusage();
@@ -78,9 +95,58 @@ final class Tracker
         return $st;
     }
 
+    public function __toString()
+    {
+        return json_encode($this->getStats());
+    }
+
+    public function __getInfo()
+    {
+        $trace = [];
+        $backtrack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        foreach ($backtrack as $key => $btrack) {
+            if (
+                $btrack['file'] == $this->clear_path . DIRECTORY_SEPARATOR . "functions.php" &&
+                $btrack['function'] == "dbsnOOp\\resolve_result"
+            ) {
+                $trace = array_slice($backtrack, $key + 1);
+                break;
+            }
+        }
+        if (!empty($trace)) {
+            $trace[0]['function'] = $this->function;
+            $status['meta']["_file"] = $trace[0]['file'];
+            $status['meta']["_line"] = $trace[0]['line'];
+            $status['meta']["_function"] = $trace[0]['function'];
+            $status['meta']["_class"] = $trace[0]['class'];
+            $status['meta']["_script_file"] = $trace[count($trace) - 1]['file'];
+        }
+        return [
+            "type" => $this->type,
+            "tags" => $this->tags,
+            "meta" => [
+                "_id" => $this->_id,
+                "_app_id" => $this->_app_id,
+                "_parent_id" => $this->_parent->_id(),
+                "_childs" => array_map(function($el) {
+                    return $el->__getInfo();
+                }, $this->childs),
+            ],
+            "times" => [
+                "start" => $this->start,
+                "end" => $this->end,
+                "duration" => $this->finished ? $this->end - $this->start : 0,
+                "duration_ns" => $this->finished ? $this->ns_end - $this->ns_start : 0
+            ],
+            "object" => $this->object,
+            "resource" => $this->resource,
+            "info" => $this->info,
+            "metrics" => $this->getStatistics()
+        ];
+    }
+
     public function getStats(): array
     {
-        
         $trace = [];
         $backtrack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         foreach ($backtrack as $key => $btrack) {
@@ -93,7 +159,6 @@ final class Tracker
             }
         }
 
-        $trace[0]['function'] = $this->function;
 
         $status = [
             "type" => $this->type,
@@ -101,12 +166,10 @@ final class Tracker
             "meta" => [
                 "_id" => $this->_id,
                 "_app_id" => $this->_app_id,
-                "_parent_id" => $this->_parent_id,
-                "_file" => $trace[0]['file'],
-                "_line" => $trace[0]['line'],
-                "_function" => $trace[0]['function'],
-                "_class" => $trace[0]['class'],
-                "_script_file" => $trace[count($trace) - 1]['file']
+                "_parent_id" => $this->_parent->_id(),
+                "_childs" => array_map(function($el) {
+                    return $el->__getInfo();
+                },$this->childs)
             ],
             "times" => [
                 "start" => $this->start,
@@ -120,6 +183,26 @@ final class Tracker
             "info" => $this->info,
             "metrics" => $this->getStatistics()
         ];
+
+        if (!empty($trace)) {
+            $trace[0]['function'] = $this->function;
+            $status['meta']["_file"] = $trace[0]['file'];
+            $status['meta']["_line"] = $trace[0]['line'];
+            $status['meta']["_function"] = $trace[0]['function'];
+            $status['meta']["_class"] = $trace[0]['class'];
+            $status['meta']["_script_file"] = $trace[count($trace) - 1]['file'];
+        }
         return $status;
+    }
+
+    public function addChild(Tracker $child): void
+    {
+        $this->childs[] = $child;
+        $this->current_child = $child;
+    }
+
+    public function getChilds(): array
+    {
+        return $this->childs;
     }
 }
