@@ -6,8 +6,7 @@
             "dbsnOOp\\": "src/"
         },
         "files": [
-            "src/functions.php",
-            "src/parameters.php"
+            "src/functions.php"
         ]
     },
     "require": {

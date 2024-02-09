@@ -2,9 +2,11 @@
 
 namespace dbsnOOp\Integrations\PDO;
 
+use dbsnOOp\DSSegment;
 use dbsnOOp\Integrations\Integration;
 use dbsnOOp\Integrations\ObjectMaps;
 use dbsnOOp\Tracker;
+use dbsnOOp\Utils\Parameter;
 
 use const dbsnOOp\DB_HOST;
 use const dbsnOOp\DB_NAME;
@@ -34,11 +36,10 @@ final class PDOIntegration extends Integration
             "PDO",
             "query",
             [
-                "pos_exec" => function ($tracker, $args, $result, $that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $that) {
                     list($query) = $args;
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
-                    $tracker->resource = "query";
-                    $tracker->object = "PDO::query";
+                    $segment->type = Parameter::APP_DATABASE;
+                    $segment->name = "PDO::query";
                     $info = ObjectMaps::get($that, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
                         $port = "3306";
@@ -57,21 +58,21 @@ final class PDOIntegration extends Integration
                             $base = "mysql";
 
                         $info = [
-                            DB_HOST => $host,
-                            DB_NAME => $base,
-                            DB_PORT => $port,
-                            DB_TYPE => $driver,
-                            DB_VERSION => $server_version
+                            Parameter::DB_HOST => $host,
+                            Parameter::DB_NAME => $base,
+                            Parameter::DB_PORT => $port,
+                            Parameter::DB_TYPE => $driver,
+                            Parameter::DB_VERSION => $server_version
                         ];
                         ObjectMaps::set($that, self::DATABASE_CONFIG_KEY, $info);
                     }
 
                     if ($result) {
-                        $info[QUERY_NUM_ROWS] = $result->rowCount();
+                        $info[Parameter::QUERY_NUM_ROWS] = $result->rowCount();
                     }
-                    $info[DB_TRANSACTION] = $that->inTransaction();
-                    $info[DB_QUERY] = $query;
-                    $tracker->info = $info;
+                    $info[Parameter::DB_TRANSACTION] = $that->inTransaction();
+                    $info[Parameter::DB_QUERY] = $query;
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -80,11 +81,10 @@ final class PDOIntegration extends Integration
             "PDO",
             "exec",
             [
-                "pos_exec" => function ($tracker, $args, $result,$that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $that) {
                     list($query) = $args;
-                    $tracker->resource = "query";
-                    $tracker->object = "PDO::exec";
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
+                    $segment->name = "PDO::exec";
+                    $segment->type = Parameter::APP_DATABASE;
                     $info = ObjectMaps::get($that, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
                         $port = "3306";
@@ -103,19 +103,19 @@ final class PDOIntegration extends Integration
                             $base = "mysql";
 
                         $info = [
-                            DB_HOST => $host,
-                            DB_NAME => $base,
-                            DB_PORT => $port,
-                            DB_TYPE => $driver,
-                            DB_VERSION => $server_version
+                            Parameter::DB_HOST => $host,
+                            Parameter::DB_NAME => $base,
+                            Parameter::DB_PORT => $port,
+                            Parameter::DB_TYPE => $driver,
+                            Parameter::DB_VERSION => $server_version
                         ];
                         ObjectMaps::set($that, self::DATABASE_CONFIG_KEY, $info);
                     }
 
-                    $info[DB_TRANSACTION] = $that->inTransaction();
-                    $info[QUERY_NUM_ROWS] = $result;
-                    $info[DB_QUERY] = $query;
-                    $tracker->info = $info;
+                    $info[Parameter::DB_TRANSACTION] = $that->inTransaction();
+                    $info[Parameter::QUERY_NUM_ROWS] = $result;
+                    $info[Parameter::DB_QUERY] = $query;
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -124,13 +124,13 @@ final class PDOIntegration extends Integration
             "PDOStatement",
             "execute",
             [
-                "pos_exec" => function ($tracker, $args, $result, &$that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, &$that) {
                     $pdo = ObjectMaps::get($that, self::DATABASE_STM_KEY, null);
                     if (!$pdo) {
                         return;
                     }
-                    $tracker->resource = "query";
-                    $tracker->object = "PDOStatement::execute";
+                    $segment->type = Parameter::APP_DATABASE;
+                    $segment->name = "PDOStatement::execute";
                     $info = ObjectMaps::get($pdo, self::DATABASE_CONFIG_KEY, []);
                     if (empty($info)) {
                         $port = "3306";
@@ -149,20 +149,18 @@ final class PDOIntegration extends Integration
                             $base = "mysql";
 
                         $info = [
-                            DB_HOST => $host,
-                            DB_NAME => $base,
-                            DB_PORT => $port,
-                            DB_TYPE => $driver,
-                            DB_VERSION => $server_version
+                            Parameter::DB_HOST => $host,
+                            Parameter::DB_NAME => $base,
+                            Parameter::DB_PORT => $port,
+                            Parameter::DB_TYPE => $driver,
+                            Parameter::DB_VERSION => $server_version
                         ];
                         ObjectMaps::set($pdo, self::DATABASE_CONFIG_KEY, $info);
                     }
-
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
-                    $info[DB_TRANSACTION] = $pdo->inTransaction();
-                    $info[QUERY_NUM_ROWS] = $that->rowCount();
-                    $info[DB_QUERY] = $that->queryString;
-                    $tracker->info = $info;
+                    $info[Parameter::DB_TRANSACTION] = $pdo->inTransaction();
+                    $info[Parameter::QUERY_NUM_ROWS] = $that->rowCount();
+                    $info[Parameter::DB_QUERY] = $that->queryString;
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -192,11 +190,11 @@ final class PDOIntegration extends Integration
                             $base = "mysql";
 
                         $info = [
-                            DB_HOST => $host,
-                            DB_NAME => $base,
-                            DB_PORT => $port,
-                            DB_TYPE => $driver,
-                            DB_VERSION => $server_version
+                            Parameter::DB_HOST => $host,
+                            Parameter::DB_NAME => $base,
+                            Parameter::DB_PORT => $port,
+                            Parameter::DB_TYPE => $driver,
+                            Parameter::DB_VERSION => $server_version
                         ];
                         ObjectMaps::set($that, self::DATABASE_CONFIG_KEY, $info);
                     }
@@ -204,6 +202,5 @@ final class PDOIntegration extends Integration
                 }
             ]
         );
-
     }
 }

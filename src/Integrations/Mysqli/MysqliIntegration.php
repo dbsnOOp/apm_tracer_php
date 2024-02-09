@@ -2,18 +2,14 @@
 
 namespace dbsnOOp\Integrations\Mysqli;
 
+use dbsnOOp\DSSegment;
 use dbsnOOp\Integrations\Integration;
 use dbsnOOp\Integrations\ObjectMaps;
-use dbsnOOp\Tracker;
+use dbsnOOp\Utils\Parameter;
 
-use const dbsnOOp\DB_DRIVER;
-use const dbsnOOp\DB_HOST;
 use const dbsnOOp\DB_NAME;
-use const dbsnOOp\DB_PORT;
 use const dbsnOOp\DB_QUERY;
-use const dbsnOOp\DB_TYPE;
 use const dbsnOOp\QUERY_NUM_ROWS;
-use const dbsnOOp\TYPE_APP_DATABASE_CONNECT;
 use const dbsnOOp\TYPE_APP_DATABASE_QUERY;
 
 final class MysqliIntegration extends Integration
@@ -39,10 +35,10 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_hook_function(
             'mysqli_connect',
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function ($segment, $args, $result) {
                     if ($result !== false) {
                         $info = $this->getMysqliInfo($args);
-                        ObjectMaps::set($result, self::DATABASE_CONFIG_KEY, $info);
+                        ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $info);
                     }
                 }
             ]
@@ -62,13 +58,13 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_hook_function(
             'mysqli_real_connect',
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function ($segment, $args, $result) {
                     list($mysqli) = $args;
                     $host = empty($args[1]) ? null : $args[0];
                     $dbName = empty($args[4]) ? null : $args[4];
                     if ($result !== false) {
                         $info = $this->getMysqliInfo([$host, "", "", $dbName]);
-                        ObjectMaps::set($mysqli, self::DATABASE_CONFIG_KEY, $info);
+                        ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $info);
                     }
                 }
             ]
@@ -78,7 +74,7 @@ final class MysqliIntegration extends Integration
             'mysqli',
             'real_connect',
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function ($segment, $args, $result) {
                     $info = $this->getMysqliInfo($args);
                     ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $info);
                 }
@@ -90,11 +86,11 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_hook_function(
             "mysqli_select_db",
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function ($segment, $args, $result) {
                     list($mysqli, $dbName) = $args;
-                    $object = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
-                    $object[DB_NAME] = $dbName;
-                    ObjectMaps::set($mysqli, self::DATABASE_CONFIG_KEY, $object);
+                    $object = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
+                    $object[Parameter::DB_NAME] = $dbName;
+                    ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $object);
                 }
             ]
         );
@@ -104,10 +100,10 @@ final class MysqliIntegration extends Integration
             'mysqli',
             'select_db',
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function ($segment, $args, $result) {
                     list($dbName) = $args;
                     $object = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
-                    $object[DB_NAME] = $dbName;
+                    $object[Parameter::DB_NAME] = $dbName;
                     ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $object);
                 }
             ]
@@ -121,15 +117,14 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_trace_function(
             "mysqli_query",
             [
-                "pos_exec" => function ($tracker, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result) {
                     list($mysqli, $query) = $args;
-                    $tracker->resource = "query";
-                    $tracker->object = "mysqli_query";
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
-                    $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
-                    $info[DB_QUERY] = $query;
-                    $info[QUERY_NUM_ROWS] = mysqli_num_rows($result);
-                    $tracker->info = $info;
+                    $segment->name = "mysqli_query";
+                    $segment->type = Parameter::APP_DATABASE;
+                    $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
+                    $info[Parameter::DB_QUERY] = $query;
+                    $info[Parameter::QUERY_NUM_ROWS] = mysqli_num_rows($result);
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -137,11 +132,11 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_hook_function(
             "mysqli_prepare",
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function ($segment, $args, $result) {
                     list($mysqli, $query) = $args;
-                    $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
-                    $info[DB_QUERY] = $query;
-                    ObjectMaps::set($mysqli, self::DATABASE_CONFIG_KEY, $info);
+                    $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
+                    $info[Parameter::DB_QUERY] = $query;
+                    ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $info);
                 }
             ]
         );
@@ -149,14 +144,13 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_trace_function(
             "mysqli_stmt_execute",
             [
-                "pos_exec" => function ($tracker, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result) {
                     list($mysqli) = $args;
-                    $tracker->resource = "query";
-                    $tracker->object = "mysqli_stmt_execute";
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
-                    $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
-                    $info[QUERY_NUM_ROWS] = mysqli_stmt_affected_rows($result);
-                    $tracker->info = $info;
+                    $segment->name = "mysqli_stmt_execute";
+                    $segment->type = Parameter::APP_DATABASE;
+                    $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
+                    $info[Parameter::QUERY_NUM_ROWS] = mysqli_stmt_affected_rows($result);
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -166,15 +160,14 @@ final class MysqliIntegration extends Integration
             "mysqli",
             "query",
             [
-                "pos_exec" => function ($tracker, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result) {
                     list($query) = $args;
-                    $tracker->resource = "query";
-                    $tracker->object = "mysqli::query";
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
+                    $segment->name = "mysqli::query";
+                    $segment->type = Parameter::APP_DATABASE;
                     $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
-                    $info[DB_QUERY] = $query;
-                    $info[QUERY_NUM_ROWS] = $result->affected_rows;
-                    $tracker->info = $info;
+                    $info[Parameter::DB_QUERY] = $query;
+                    $info[Parameter::QUERY_NUM_ROWS] = $result->affected_rows;
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -183,11 +176,18 @@ final class MysqliIntegration extends Integration
             "mysqli",
             "prepare",
             [
-                "pos_exec" => function ($args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($query) = $args;
-                    $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
-                    $info[DB_QUERY] = $query;
-                    ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $info);
+                    if($result !== false)
+                    {
+                        $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
+                        $info[Parameter::DB_QUERY] = $query;
+                        $info["host_info"] = $that->host_info;
+                        ObjectMaps::set($this, self::DATABASE_CONFIG_KEY, $info);
+                    }else{
+                        
+                    }
+
                 }
             ]
         );
@@ -196,14 +196,13 @@ final class MysqliIntegration extends Integration
             "mysqli_stmt",
             "execute",
             [
-                "pos_exec" => function ($tracker, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($mysqli) = $args;
-                    $tracker->resource = "query";
-                    $tracker->object = "mysqli_stmt::execute";
-                    $tracker->type = TYPE_APP_DATABASE_QUERY;
-                    $info = ObjectMaps::get($mysqli, self::DATABASE_CONFIG_KEY, []);
-                    $info[QUERY_NUM_ROWS] = $result->affected_rows;
-                    $tracker->info = $info;
+                    $segment->name = "mysqli_stmt::execute";
+                    $segment->type = Parameter::APP_DATABASE;
+                    $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
+                    $info[Parameter::QUERY_NUM_ROWS] = $that->affected_rows;
+                    $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
         );
@@ -211,7 +210,7 @@ final class MysqliIntegration extends Integration
     private function getMysqliInfo($args)
     {
         $port = "3306";
-        list($host, , , $base) = $args;
+        list($host,,, $base) = $args;
         if (!empty($host)) {
             $parts = explode(':', $host);
             $host = $parts[0];
@@ -225,49 +224,10 @@ final class MysqliIntegration extends Integration
 
 
         return [
-            DB_HOST => $host,
-            DB_NAME => $base,
-            DB_PORT => $port,
-            DB_TYPE => 'mysql'
-        ];
-    }
-
-
-    /**
-     * Given a mysqli instance, it extract an array containing host info.
-     *
-     * @param $mysqli
-     * @return array
-     */
-    public static function extractHostInfo($mysqli)
-    {
-        // silence "Property access is not allowed yet" for PHP <= 7.3
-        if (@(!isset($mysqli->host_info) || !is_string($mysqli->host_info))) {
-            return [];
-        }
-        $hostInfo = $mysqli->host_info;
-        return self::parseHostInfo(substr($hostInfo, 0, strpos($hostInfo, ' ')));
-    }
-
-    /**
-     * Given a host definition string, it extract an array containing host info.
-     *
-     * @param string $hostString
-     * @return array
-     */
-    public static function parseHostInfo($hostString)
-    {
-        if (empty($hostString) || !is_string($hostString)) {
-            return [];
-        }
-
-        $parts = explode(':', $hostString);
-        $host = $parts[0];
-        $port = isset($parts[1]) ? $parts[1] : '3306';
-        return [
-            Tag::DB_TYPE => 'mysql',
-            Tag::TARGET_HOST => $host,
-            Tag::TARGET_PORT => $port,
+            Parameter::DB_HOST => $host,
+            Parameter::DB_NAME => $base,
+            Parameter::DB_PORT => $port,
+            Parameter::DB_TYPE => 'mysql'
         ];
     }
 }
