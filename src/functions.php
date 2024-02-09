@@ -20,7 +20,10 @@ function resolve_default($result, &$track, $opt, $args, $exception = null, &$tha
         $track->finish();
 
     Tracer::removeSegment();
-    return $result;
+    if ($exception === null)
+        return $result;
+    else
+        throw $exception;
 }
 
 function resolve_promise($type, $result, &$track, $opt, $args, &$that = null, $do_close)
@@ -42,6 +45,7 @@ function resolve_promise($type, $result, &$track, $opt, $args, &$that = null, $d
             resolve_default($results, $track, $opt, $args, null, $that, $do_close);
             return $results;
         }, function ($e) use ($opt, &$track, $args, &$that, $do_close) {
+            echo "Error " .  $e->getMessage() . PHP_EOL;
             resolve_default(null, $track, $opt, $args, $e, $that, $do_close);
             return $e;
         });
@@ -59,7 +63,7 @@ function resolve($result, &$tracker, $opt, $args, $exception = null, &$that = nu
             return resolve_promise('react', $result, $tracker, $opt, $args, $exception, $that, $do_close);
         }
     }
-    return resolve_default($result, $tracker, $opt, $args,$exception, $that, $do_close);
+    return resolve_default($result, $tracker, $opt, $args, $exception, $that, $do_close);
 }
 
 /**

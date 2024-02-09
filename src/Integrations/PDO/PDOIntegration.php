@@ -36,7 +36,7 @@ final class PDOIntegration extends Integration
             "PDO",
             "query",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result, $that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($query) = $args;
                     $segment->type = Parameter::APP_DATABASE;
                     $segment->name = "PDO::query";
@@ -81,7 +81,7 @@ final class PDOIntegration extends Integration
             "PDO",
             "exec",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result, $that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($query) = $args;
                     $segment->name = "PDO::exec";
                     $segment->type = Parameter::APP_DATABASE;
@@ -124,7 +124,7 @@ final class PDOIntegration extends Integration
             "PDOStatement",
             "execute",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result, &$that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     $pdo = ObjectMaps::get($that, self::DATABASE_STM_KEY, null);
                     if (!$pdo) {
                         return;
@@ -169,7 +169,7 @@ final class PDOIntegration extends Integration
             "PDO",
             "prepare",
             [
-                "pos_exec" => function ($track, $args, $result, &$that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     if (!$result) return;
                     list($query) = $args;
                     $info = ObjectMaps::get($that, self::DATABASE_CONFIG_KEY, []);
