@@ -24,6 +24,15 @@ final class Parameter
     //Application 
     const APP_VERSION = "app.version";
     const APP_ENV = "app.env";
+    const APP_HOSTNAME = "app.hostname";
+    const APP_TEC_NAME = "app.tecnology.name";
+    const APP_TEC_VERSION = "app.tecnology.version";
+    const APP_TEC_VERSION_ID = "app.tecnology.version_id";
+    const APP_TEC_OS = "app.tecnology.os";
+    const APP_TEC_SAPI = "app.tecnology.php_sapi";
+    const APP_TEC_ZTS = "app.tecnology.php_zts";
+
+
     //DB
     const DB_TRANSACTION = "db.transaction";
     const DB_HOST = "db.host";
@@ -64,5 +73,7 @@ final class Parameter
     const ERR_FILE = "error.file";
     const ERR_LINE = "error.line";
     const ERR_TRACE = "error.trace";
+
+
 
 }

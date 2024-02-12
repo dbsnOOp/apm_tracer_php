@@ -76,6 +76,15 @@ final class DSSegment
         $this->meta[Parameter::SEGMENT_FINISH_NS] = Time::performer();
         $this->meta[Parameter::SEGMENT_DURATION] = $this->meta[Parameter::SEGMENT_FINISH_NS] - $this->meta[Parameter::SEGMENT_START_NS];
 
+        $this->meta[Parameter::APP_TEC_NAME] = "php";
+        $this->meta[Parameter::APP_TEC_VERSION] = PHP_VERSION;
+        $this->meta[Parameter::APP_TEC_VERSION_ID] = PHP_VERSION_ID;
+        $this->meta[Parameter::APP_TEC_OS] = PHP_OS;
+        $this->meta[Parameter::APP_TEC_ZTS] = PHP_ZTS;
+        $this->meta[Parameter::APP_TEC_SAPI] = PHP_SAPI;
+        $this->meta[Parameter::APP_HOSTNAME] = gethostname();
+
+
         foreach ($this->getMetrics() as $key => $metric) {
             $this->meta[$key] = $metric > 0 ? $metric - $this->init_metrics[$key] : 0;
         }
