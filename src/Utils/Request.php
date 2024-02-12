@@ -51,7 +51,7 @@ final class Request
 
         $ch = \curl_init();
 
-        \curl_setopt($ch, CURLOPT_URL, 'https://' . $this->_uri . "/v2/apm/send");
+        \curl_setopt($ch, CURLOPT_URL, 'http://' . $this->_uri . "/v2/apm/send");
         \curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         \curl_setopt($ch, CURLOPT_POST, true);
         \curl_setopt($ch, CURLOPT_POSTFIELDS, $this->getBody($payload));
