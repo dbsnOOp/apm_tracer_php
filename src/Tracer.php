@@ -14,6 +14,8 @@ use const dbsnOOp\Type\APP_WEB;
 class Tracer
 {
     public static string $default_service = "dbsnoop-tracer";
+    public static string $default_component = "Script";
+    public static array $default_tags = [];
 
     private static array $tracers = [];
 
@@ -27,7 +29,8 @@ class Tracer
         self::$root_tracer = new DSSegment;
         self::$root_tracer->analyze = true;
         self::$root_tracer->service = self::$default_service;
-        self::$root_tracer->component = "Script";
+        self::$root_tracer->component = self::$default_component;
+        self::$root_tracer->tags = self::$default_tags;
 
         self::$root_tracer->start();
 
@@ -101,6 +104,7 @@ class Tracer
 
         return true;
     }
+
     public static function install(string $name, $callback)
     {
         if (!isset(self::$tracers[$name]))
@@ -112,6 +116,8 @@ class Tracer
         $segment = new DSSegment;
         $segment->name = "execution";
         $segment->service = self::$default_service;
+        $segment->component = self::$default_component;
+        $segment->tags = self::$default_tags;
         $segment->type = Parameter::APP_DEFAULT;
         $segment->component = $name;
 
@@ -143,4 +149,5 @@ class Tracer
         
         self::$currents_tracer->rewind();
     }
+
 }
