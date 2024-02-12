@@ -52,7 +52,7 @@ final class Request
         $ch = \curl_init();
 
         \curl_setopt($ch, CURLOPT_URL, 'https://' . $this->_uri . "/v2/apm/send");
-        \curl_setopt($ch, CURLOPT_RETURNTRANSFER, 0);
+        \curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         \curl_setopt($ch, CURLOPT_POST, true);
         \curl_setopt($ch, CURLOPT_POSTFIELDS, $this->getBody($payload));
         \curl_setopt($ch, CURLOPT_TIMEOUT_MS, self::DEFAULT_TIMEOUT);
