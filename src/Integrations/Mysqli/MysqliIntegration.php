@@ -117,7 +117,7 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_trace_function(
             "mysqli_query",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($mysqli, $query) = $args;
                     $segment->name = "mysqli_query";
                     $segment->type = Parameter::APP_DATABASE;
@@ -144,7 +144,7 @@ final class MysqliIntegration extends Integration
         \dbsnOOp\add_trace_function(
             "mysqli_stmt_execute",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($mysqli) = $args;
                     $segment->name = "mysqli_stmt_execute";
                     $segment->type = Parameter::APP_DATABASE;
@@ -160,7 +160,7 @@ final class MysqliIntegration extends Integration
             "mysqli",
             "query",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
                     list($query) = $args;
                     $segment->name = "mysqli::query";
                     $segment->type = Parameter::APP_DATABASE;

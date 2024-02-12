@@ -2,3 +2,4 @@ vendor
 composer.lock
 teste*
 *_old
+src_*

@@ -16,10 +16,11 @@ function resolve_default($result, &$track, $opt, $args, $exception = null, &$tha
     if (isset($opt['pos_exec']) && is_callable($opt['pos_exec']))
         call_user_func_array($opt['pos_exec'], [&$track, $args, $result, $exception, &$that]);
 
-    if ($do_close && $track !== null)
+    if ($do_close && $track !== null) {
         $track->finish();
+        Tracer::removeSegment();
+    }
 
-    Tracer::removeSegment();
     if ($exception === null)
         return $result;
     else
@@ -45,7 +46,6 @@ function resolve_promise($type, $result, &$track, $opt, $args, &$that = null, $d
             resolve_default($results, $track, $opt, $args, null, $that, $do_close);
             return $results;
         }, function ($e) use ($opt, &$track, $args, &$that, $do_close) {
-            echo "Error " .  $e->getMessage() . PHP_EOL;
             resolve_default(null, $track, $opt, $args, $e, $that, $do_close);
             return $e;
         });
@@ -144,7 +144,7 @@ function add_hook_function(string $function_name, array $opt)
         $exception = null;
         $track = Tracer::getCurrentSegment();
         if (isset($opt['pre_exec']) && is_callable($opt['pre_exec'])) {
-            call_user_func_array($opt['pre_exec'], [$args]);
+            call_user_func_array($opt['pre_exec'], [&$track, $args]);
         }
         try {
             $result = $function_name($args);
@@ -162,22 +162,24 @@ function add_hook_method(string $class_name, string $method_name, array $opt)
 {
 
     if (!\class_exists($class_name)) {
+        echo "Error $class_name" . PHP_EOL;
         return;
         trigger_error("Class $class_name not found", E_USER_ERROR);
         return;
     }
 
     if (!\method_exists($class_name, $method_name)) {
+        echo "Error $class_name - $method_name" . PHP_EOL;
         trigger_error("Method $class_name::$method_name() not found", E_USER_ERROR);
         return;
     }
     \uopz_set_return($class_name, $method_name, function (...$args) use ($class_name, $method_name, $opt) {
         $method_reflection = new ReflectionMethod($class_name, $method_name);
         $obj = $method_reflection->isStatic() ?  NULL : $this;
-        if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
-            call_user_func_array($opt['pre_exec'], [null, $args, $obj]);
-        $exception = null;
         $track = Tracer::getCurrentSegment();
+        if (isset($opt['pre_exec']) && is_callable($opt['pre_exec']))
+            call_user_func_array($opt['pre_exec'], [&$track, $args, $obj]);
+        $exception = null;
         try {
             if (is_null($obj)) {
                 $result = self::$method_name(...$args);

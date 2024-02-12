@@ -133,15 +133,14 @@ class Tracer
 
     private static function addSegment(DSSegment $segment)
     {
-
-        self::$currents_tracer->unshift($segment);
+        self::$currents_tracer->push($segment);
         self::$currents_tracer->rewind();
     }
 
     public static function removeSegment()
     {
-        if (self::$currents_tracer->count() <= 1) return;
-        self::$currents_tracer->pop();
+        if (self::$currents_tracer->count() <= 1) return;      
+        
         self::$currents_tracer->rewind();
     }
 }

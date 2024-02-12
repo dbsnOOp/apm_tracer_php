@@ -36,7 +36,7 @@ final class PDOIntegration extends Integration
             "PDO",
             "query",
             [
-                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
+                "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {                    
                     list($query) = $args;
                     $segment->type = Parameter::APP_DATABASE;
                     $segment->name = "PDO::query";
