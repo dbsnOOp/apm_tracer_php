@@ -51,7 +51,7 @@ final class Request
 
         $ch = \curl_init();
 
-        \curl_setopt($ch, CURLOPT_URL, 'http://' . $this->_uri . "/v2/apm/send");
+        \curl_setopt($ch, CURLOPT_URL, 'https://' . $this->_uri . "/v2/apm/send");
         \curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         \curl_setopt($ch, CURLOPT_POST, true);
         \curl_setopt($ch, CURLOPT_POSTFIELDS, $this->getBody($payload));
@@ -59,6 +59,8 @@ final class Request
         \curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, self::DEFAULT_CONNECTION_TIMEOUT);
         \curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         \curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHeaders());
+        \curl_setopt($ch, CURLOPT_VERBOSE, true);
+
 
         if (($response = \curl_exec($ch)) === false) {
             $errno = \curl_errno($ch);

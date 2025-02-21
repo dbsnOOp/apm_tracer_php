@@ -87,7 +87,7 @@ final class Logger
     {
         if (!$this->enable($level)) return;
         $date = date(\DateTime::ATOM);
-        $message = "[$date][dbsnoop][" . self::$erro_name[$level] . "] $message";
+        $message = "[$date][dbsnoop Tracer][" . self::$erro_name[$level] . "] $message";
         error_log($message);
     }
 
