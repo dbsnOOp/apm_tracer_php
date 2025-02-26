@@ -59,7 +59,7 @@ final class Request
         \curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, self::DEFAULT_CONNECTION_TIMEOUT);
         \curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         \curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHeaders());
-        \curl_setopt($ch, CURLOPT_VERBOSE, true);
+        \curl_setopt($ch, CURLOPT_VERBOSE, false);
 
 
         if (($response = \curl_exec($ch)) === false) {

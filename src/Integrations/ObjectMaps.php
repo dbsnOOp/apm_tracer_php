@@ -12,7 +12,7 @@ final class ObjectMaps
     {
         if (\class_exists("WeakMap", $autoload = false)) {
             if (!self::$map) {
-                self::$map = new \WeekMap();
+                self::$map = new \WeakMap();
             }
 
             if (isset(self::$map[$instance])) {
