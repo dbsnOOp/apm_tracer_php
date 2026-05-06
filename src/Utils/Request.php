@@ -68,10 +68,23 @@ final class Request
 
             Logger::get()->debug("Queueing Segment - Host: " . $this->_uri . " - Payload: " . json_encode($payload));
 
-            self::$_promises[] = self::$_client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
-                'headers' => $this->getHeaders(),
-                'body' => $body,
-            ]);
+            if (PHP_SAPI === 'cli') {
+                self::$_promises[] = self::$_client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
+                    'headers' => $this->getHeaders(),
+                    'body' => $body,
+                ]);
+            } else {
+                // Em ambiente FPM/Web, enviamos síncrono para garantir envio e logs antes da desconexão
+                try {
+                    $response = self::$_client->post('https://' . $this->_uri . "/v2/apm/send", [
+                        'headers' => $this->getHeaders(),
+                        'body' => $body,
+                    ]);
+                    Logger::get()->debug("APM Request Fulfilled (Sync) - Status: " . $response->getStatusCode() . " - Body: " . (string)$response->getBody());
+                } catch (\Throwable $e) {
+                    Logger::get()->error("APM Request Rejected (Sync) - " . $e->getMessage());
+                }
+            }
         } catch (\Throwable $e) {
             Logger::get()->error("Failure to queue async Segment - " . $e->getMessage());
         }
