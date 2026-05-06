@@ -15,6 +15,8 @@ final class Request
     private string $_hash;
     private string $_token;
 
+    private static array $_promises = [];
+
     public function __construct()
     {
 
@@ -33,7 +35,6 @@ final class Request
             return false;
         }
 
-
         $this->_hash = getenv('DBSNOOP_APM_APP_KEY');
         $this->_uri = getenv('DBSNOOP_APM_HOST_URL');
         $this->_token = getenv('DBSNOOP_APM_APP_TOKEN');
@@ -48,40 +49,41 @@ final class Request
 
     private function request(array $payload)
     {
-
-        $ch = \curl_init();
-
-        \curl_setopt($ch, CURLOPT_URL, 'https://' . $this->_uri . "/v2/apm/send");
-        \curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        \curl_setopt($ch, CURLOPT_POST, true);
-        \curl_setopt($ch, CURLOPT_POSTFIELDS, $this->getBody($payload));
-        \curl_setopt($ch, CURLOPT_TIMEOUT_MS, self::DEFAULT_TIMEOUT);
-        \curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, self::DEFAULT_CONNECTION_TIMEOUT);
-        \curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        \curl_setopt($ch, CURLOPT_HTTPHEADER, $this->getHeaders());
-        \curl_setopt($ch, CURLOPT_VERBOSE, false);
-
-
-        if (($response = \curl_exec($ch)) === false) {
-            $errno = \curl_errno($ch);
-            $errmsg = \curl_error($ch);
-            Logger::get()->error("Failue to send Segment - curl - [$errno]$errmsg");
+        if (empty($this->_uri) || empty($this->_token) || empty($this->_hash)) {
             return;
         }
 
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($status === 415) {
-            Logger::get()->error('Failue to send Segment, the package need upgrade!');
+        try {
+            $client = new \GuzzleHttp\Client([
+                'timeout' => self::DEFAULT_TIMEOUT / 1000.0,
+                'connect_timeout' => self::DEFAULT_CONNECTION_TIMEOUT / 1000.0,
+                'allow_redirects' => true,
+            ]);
+
+            $body = $this->getBody($payload);
+
+            self::$_promises[] = $client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
+                'headers' => $this->getHeaders(),
+                'body' => $body,
+            ]);
+        } catch (\Throwable $e) {
+            Logger::get()->error("Failure to queue async Segment - " . $e->getMessage());
+        }
+    }
+
+    public static function flush()
+    {
+        if (empty(self::$_promises)) {
             return;
         }
 
-        if ($status !== 200) {
-            Logger::get()->error("Failue to send Segment - request - [$status]$response");
-            return;
+        try {
+            \GuzzleHttp\Promise\Utils::all(self::$_promises)->wait();
+        } catch (\Throwable $e) {
+            Logger::get()->error("Failure to flush active segments - " . $e->getMessage());
+        } finally {
+            self::$_promises = [];
         }
-
-        Logger::get()->debug("Succefully Send");
     }
 
 

@@ -38,8 +38,11 @@ class Tracer
         self::addSegment(self::$root_tracer);
 
 
-        set_error_handler(function (...$err) {
+        $previous_handler = set_error_handler(function (...$err) use (&$previous_handler) {
             if (!(error_reporting() & $err[0])) {
+                if (is_callable($previous_handler)) {
+                    return call_user_func_array($previous_handler, $err);
+                }
                 return false;
             }
             self::defineEnvirounment();
@@ -57,22 +60,34 @@ class Tracer
                     break;
                 case E_USER_WARNING:
                 case E_WARNING:
-                    $error[Parameter::ERR_TYPE] =Parameter::TRIGGER_WARNING;
+                    $error[Parameter::ERR_TYPE] = Parameter::TRIGGER_WARNING;
                     break;
                 case E_USER_NOTICE:
                 case E_NOTICE:
-                    $error[Parameter::ERR_TYPE] =Parameter::TRIGGER_NOTICE;
+                    $error[Parameter::ERR_TYPE] = Parameter::TRIGGER_NOTICE;
                     break;
                 default:
+                    if (is_callable($previous_handler)) {
+                        return call_user_func_array($previous_handler, $err);
+                    }
                     return;
             }
             self::$currents_tracer->current()->error[] = $error;
+
+            if (is_callable($previous_handler)) {
+                return call_user_func_array($previous_handler, $err);
+            }
+            return false;
         });
 
         register_shutdown_function(function () {
             self::defineEnvirounment();
             self::$root_tracer->stop();
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
             self::$root_tracer->finish();
+            \dbsnOOp\Utils\Request::flush();
         });
 
         Loader::init();
@@ -141,6 +156,31 @@ class Tracer
     {
         self::$currents_tracer->push($segment);
         self::$currents_tracer->rewind();
+    }
+
+    public static function trace(string $name, callable $callback, array $tags = [])
+    {
+        $segment = self::getSegment($name);
+        $segment->analyze = true;
+        $segment->tags = array_merge($segment->tags, $tags);
+        $segment->start();
+
+        try {
+            $result = $callback($segment);
+            return $result;
+        } catch (\Throwable $e) {
+            $segment->error[] = [
+                Parameter::ERR_TYPE => Parameter::TRIGGER_EXCEPTION,
+                Parameter::ERR_MSG => $e->getMessage(),
+                Parameter::ERR_FILE => $e->getFile(),
+                Parameter::ERR_LINE => $e->getLine()
+            ];
+            throw $e;
+        } finally {
+            $segment->stop();
+            $segment->finish();
+            self::removeSegment();
+        }
     }
 
     public static function removeSegment()

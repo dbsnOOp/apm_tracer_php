@@ -71,6 +71,9 @@ function resolve($result, &$tracker, $opt, $args, $exception = null, &$that = nu
  */
 function add_trace_function(string $function_name, array $opt = [])
 {
+    if (!function_exists('uopz_set_return')) {
+        return;
+    }
     if (!function_exists($function_name)) {
         return;
         throw new Exception("Function $function_name() not found!");
@@ -96,6 +99,9 @@ function add_trace_function(string $function_name, array $opt = [])
  */
 function add_trace_method(string $class_name, string $method_name, array $opt = [])
 {
+    if (!function_exists('uopz_set_return')) {
+        return;
+    }
 
     if (!\class_exists($class_name)) {
         return;
@@ -136,6 +142,9 @@ function add_trace_method(string $class_name, string $method_name, array $opt = 
  */
 function add_hook_function(string $function_name, array $opt)
 {
+    if (!function_exists('uopz_set_return')) {
+        return;
+    }
     if (!function_exists($function_name)) {
         return;
         throw new Exception("Function $function_name() not found!");
@@ -160,6 +169,9 @@ function add_hook_function(string $function_name, array $opt)
  */
 function add_hook_method(string $class_name, string $method_name, array $opt)
 {
+    if (!function_exists('uopz_set_return')) {
+        return;
+    }
 
     if (!\class_exists($class_name)) {
         echo "Error $class_name" . PHP_EOL;
