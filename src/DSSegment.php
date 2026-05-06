@@ -109,18 +109,18 @@ final class DSSegment
 
     private function getMetrics()
     {
-        $metrics = getrusage();
+        $metrics = getrusage() ?: [];
 
         return [
-            Parameter::SEGMENT_METRIC_UTIME => $metrics['ru_utime.tv_usec'],
-            Parameter::SEGMENT_METRIC_STIME => $metrics['ru_stime.tv_usec'],
-            Parameter::SEGMENT_METRIC_IN_BLOCK => $metrics['ru_inblock'],
-            Parameter::SEGMENT_METRIC_OUT_BLOCK => $metrics['ru_oublock'],
-            Parameter::SEGMENT_METRIC_MSG_RECV => $metrics['ru_msgrcv'],
-            Parameter::SEGMENT_METRIC_MSG_SEND => $metrics['ru_msgsnd'],
-            Parameter::SEGMENT_METRIC_IX_RSS => $metrics['ru_ixrss'],
-            Parameter::SEGMENT_METRIC_ID_RSS => $metrics['ru_idrss'],
-            Parameter::SEGMENT_METRIC_IS_RSS => $metrics['ru_isrss']
+            Parameter::SEGMENT_METRIC_UTIME => $metrics['ru_utime.tv_usec'] ?? 0,
+            Parameter::SEGMENT_METRIC_STIME => $metrics['ru_stime.tv_usec'] ?? 0,
+            Parameter::SEGMENT_METRIC_IN_BLOCK => $metrics['ru_inblock'] ?? 0,
+            Parameter::SEGMENT_METRIC_OUT_BLOCK => $metrics['ru_oublock'] ?? 0,
+            Parameter::SEGMENT_METRIC_MSG_RECV => $metrics['ru_msgrcv'] ?? 0,
+            Parameter::SEGMENT_METRIC_MSG_SEND => $metrics['ru_msgsnd'] ?? 0,
+            Parameter::SEGMENT_METRIC_IX_RSS => $metrics['ru_ixrss'] ?? 0,
+            Parameter::SEGMENT_METRIC_ID_RSS => $metrics['ru_idrss'] ?? 0,
+            Parameter::SEGMENT_METRIC_IS_RSS => $metrics['ru_isrss'] ?? 0
         ];
     }
 

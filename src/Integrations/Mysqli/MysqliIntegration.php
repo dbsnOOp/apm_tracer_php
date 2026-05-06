@@ -123,7 +123,7 @@ final class MysqliIntegration extends Integration
                     $segment->type = Parameter::APP_DATABASE;
                     $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
                     $info[Parameter::DB_QUERY] = $query;
-                    $info[Parameter::QUERY_NUM_ROWS] = mysqli_num_rows($result);
+                    $info[Parameter::QUERY_NUM_ROWS] = ($result instanceof \mysqli_result) ? mysqli_num_rows($result) : (($mysqli instanceof \mysqli) ? mysqli_affected_rows($mysqli) : 0);
                     $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
@@ -145,11 +145,11 @@ final class MysqliIntegration extends Integration
             "mysqli_stmt_execute",
             [
                 "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
-                    list($mysqli) = $args;
+                    list($stmt) = $args;
                     $segment->name = "mysqli_stmt_execute";
                     $segment->type = Parameter::APP_DATABASE;
                     $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
-                    $info[Parameter::QUERY_NUM_ROWS] = mysqli_stmt_affected_rows($result);
+                    $info[Parameter::QUERY_NUM_ROWS] = ($stmt instanceof \mysqli_stmt) ? mysqli_stmt_affected_rows($stmt) : 0;
                     $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
@@ -166,7 +166,7 @@ final class MysqliIntegration extends Integration
                     $segment->type = Parameter::APP_DATABASE;
                     $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
                     $info[Parameter::DB_QUERY] = $query;
-                    $info[Parameter::QUERY_NUM_ROWS] = $result->affected_rows;
+                    $info[Parameter::QUERY_NUM_ROWS] = ($result instanceof \mysqli_result) ? $result->num_rows : (($that instanceof \mysqli) ? $that->affected_rows : 0);
                     $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
@@ -197,11 +197,10 @@ final class MysqliIntegration extends Integration
             "execute",
             [
                 "pos_exec" => function (DSSegment $segment, $args, $result, $ex, $that) {
-                    list($mysqli) = $args;
                     $segment->name = "mysqli_stmt::execute";
                     $segment->type = Parameter::APP_DATABASE;
                     $info = ObjectMaps::get($this, self::DATABASE_CONFIG_KEY, []);
-                    $info[Parameter::QUERY_NUM_ROWS] = $that->affected_rows;
+                    $info[Parameter::QUERY_NUM_ROWS] = ($that instanceof \mysqli_stmt) ? $that->affected_rows : 0;
                     $segment->tags = array_merge($segment->tags, $info);
                 }
             ]
