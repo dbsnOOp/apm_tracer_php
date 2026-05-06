@@ -24,13 +24,14 @@ final class Logger
     public static $enable_level = -1;
 
     public static $erro_name = [
-        "EMERGENCY",
-        "CRITICAL",
-        "WARNING",
-        "ALERT",
-        "NOTICE",
-        "INFO",
-        "DEBUG"
+        self::DEBUG     => "DEBUG",
+        self::INFO      => "INFO",
+        self::NOTICE    => "NOTICE",
+        self::ALERT     => "ALERT",
+        self::WARNING   => "WARNING",
+        self::ERROR     => "ERROR",
+        self::CRITICAL  => "CRITICAL",
+        self::EMERGENCY => "EMERGENCY"
     ];
 
     public static function get()

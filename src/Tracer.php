@@ -84,13 +84,13 @@ class Tracer
             self::defineEnvirounment();
             if (isset(self::$root_tracer) && self::$root_tracer !== null) {
                 self::$root_tracer->stop();
-                if (function_exists('fastcgi_finish_request')) {
-                    ignore_user_abort(true);
-                    fastcgi_finish_request();
-                }
                 self::$root_tracer->finish();
             }
             \dbsnOOp\Utils\Request::flush();
+            if (function_exists('fastcgi_finish_request')) {
+                ignore_user_abort(true);
+                fastcgi_finish_request();
+            }
         });
 
         Loader::init();
