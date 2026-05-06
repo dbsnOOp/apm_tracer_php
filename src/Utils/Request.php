@@ -66,6 +66,8 @@ final class Request
 
             $body = $this->getBody($payload);
 
+            Logger::get()->debug("Queueing Segment - Host: " . $this->_uri . " - Payload: " . json_encode($payload));
+
             self::$_promises[] = self::$_client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
                 'headers' => $this->getHeaders(),
                 'body' => $body,
@@ -84,7 +86,10 @@ final class Request
         try {
             $results = \GuzzleHttp\Promise\Utils::settle(self::$_promises)->wait();
             foreach ($results as $result) {
-                if (isset($result['state']) && $result['state'] === 'rejected') {
+                if (isset($result['state']) && $result['state'] === 'fulfilled') {
+                    $response = $result['value'];
+                    Logger::get()->debug("APM Request Fulfilled - Status: " . $response->getStatusCode() . " - Body: " . (string)$response->getBody());
+                } else if (isset($result['state']) && $result['state'] === 'rejected') {
                     $reason = $result['reason'];
                     $msg = $reason instanceof \Throwable ? $reason->getMessage() : json_encode($reason);
                     Logger::get()->error("Async Promise Rejected - " . $msg);

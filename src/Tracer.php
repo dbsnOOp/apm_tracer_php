@@ -106,6 +106,7 @@ class Tracer
                 case "INTEGRAL":
                     Logger::$enable_level = Logger::ERROR;
                     break;
+                case "DEBUG":
                 case "INTEGRAL_DEBUG":
                     Logger::$enable_level = Logger::DEBUG;
                     break;
