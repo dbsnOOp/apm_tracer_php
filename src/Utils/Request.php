@@ -16,6 +16,7 @@ final class Request
     private string $_token;
 
     private static array $_promises = [];
+    private static ?\GuzzleHttp\Client $_client = null;
 
     public function __construct()
     {
@@ -54,15 +55,17 @@ final class Request
         }
 
         try {
-            $client = new \GuzzleHttp\Client([
-                'timeout' => self::DEFAULT_TIMEOUT / 1000.0,
-                'connect_timeout' => self::DEFAULT_CONNECTION_TIMEOUT / 1000.0,
-                'allow_redirects' => true,
-            ]);
+            if (self::$_client === null) {
+                self::$_client = new \GuzzleHttp\Client([
+                    'timeout' => self::DEFAULT_TIMEOUT / 1000.0,
+                    'connect_timeout' => self::DEFAULT_CONNECTION_TIMEOUT / 1000.0,
+                    'allow_redirects' => true,
+                ]);
+            }
 
             $body = $this->getBody($payload);
 
-            self::$_promises[] = $client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
+            self::$_promises[] = self::$_client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
                 'headers' => $this->getHeaders(),
                 'body' => $body,
             ]);
@@ -78,7 +81,7 @@ final class Request
         }
 
         try {
-            \GuzzleHttp\Promise\Utils::all(self::$_promises)->wait();
+            \GuzzleHttp\Promise\Utils::settle(self::$_promises)->wait();
         } catch (\Throwable $e) {
             Logger::get()->error("Failure to flush active segments - " . $e->getMessage());
         } finally {
@@ -142,8 +145,8 @@ final class Request
     private function getHeaders(): array
     {
         return [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $this->_token
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $this->_token
         ];
     }
 }
