@@ -17,7 +17,18 @@ final class Loader
             new SohrisHttpIntegration,
             new SohrisMysqlIntegration,
             new SohrisEventsIntegration,
-            new PDOIntegration
+            new PDOIntegration,
+            new \dbsnOOp\Integrations\Redis\RedisIntegration,
+            new \dbsnOOp\Integrations\Memcached\MemcachedIntegration,
+            new \dbsnOOp\Integrations\MongoDB\MongoDBIntegration,
+            new \dbsnOOp\Integrations\ElasticSearch\ElasticSearchIntegration,
+            new \dbsnOOp\Integrations\Guzzle\GuzzleIntegration,
+            new \dbsnOOp\Integrations\Laravel\LaravelIntegration,
+            new \dbsnOOp\Integrations\Symfony\SymfonyIntegration,
+            new \dbsnOOp\Integrations\Zend\ZendIntegration,
+            new \dbsnOOp\Integrations\PostgreSql\PostgreSqlIntegration,
+            new \dbsnOOp\Integrations\Oracle\OracleIntegration,
+            new \dbsnOOp\Integrations\Mssql\MssqlIntegration
         ];
         foreach($integrations as $integration)
         {

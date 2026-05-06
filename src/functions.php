@@ -71,6 +71,25 @@ function resolve($result, &$tracker, $opt, $args, $exception = null, &$that = nu
  */
 function add_trace_function(string $function_name, array $opt = [])
 {
+    if (function_exists('OpenTelemetry\Instrumentation\hook')) {
+        \OpenTelemetry\Instrumentation\hook(
+            null,
+            $function_name,
+            pre: function ($object, array $params, ?string $class, string $method, ?string $uniqueId) use ($opt, $function_name) {
+                $segment = Tracer::getSegment($function_name);
+                $segment->start();
+                if (isset($opt['pre_exec']) && is_callable($opt['pre_exec'])) {
+                    call_user_func_array($opt['pre_exec'], [&$segment, $params]);
+                }
+            },
+            post: function ($object, array $params, $returnValue, ?Throwable $exception, ?string $uniqueId) use ($opt) {
+                $segment = Tracer::getCurrentSegment();
+                return resolve($returnValue, $segment, $opt, $params, $exception, $object);
+            }
+        );
+        return;
+    }
+
     if (!function_exists('uopz_set_return')) {
         return;
     }
@@ -99,6 +118,26 @@ function add_trace_function(string $function_name, array $opt = [])
  */
 function add_trace_method(string $class_name, string $method_name, array $opt = [])
 {
+    if (function_exists('OpenTelemetry\Instrumentation\hook')) {
+        \OpenTelemetry\Instrumentation\hook(
+            $class_name,
+            $method_name,
+            pre: function ($object, array $params, string $class, string $method, ?string $uniqueId) use ($opt) {
+                $name = "$class::$method";
+                $segment = Tracer::getSegment($name);
+                $segment->start();
+                if (isset($opt['pre_exec']) && is_callable($opt['pre_exec'])) {
+                    call_user_func_array($opt['pre_exec'], [&$segment, $params, $object]);
+                }
+            },
+            post: function ($object, array $params, $returnValue, ?Throwable $exception, ?string $uniqueId) use ($opt) {
+                $segment = Tracer::getCurrentSegment();
+                return resolve($returnValue, $segment, $opt, $params, $exception, $object);
+            }
+        );
+        return;
+    }
+
     if (!function_exists('uopz_set_return')) {
         return;
     }
@@ -142,6 +181,24 @@ function add_trace_method(string $class_name, string $method_name, array $opt = 
  */
 function add_hook_function(string $function_name, array $opt)
 {
+    if (function_exists('OpenTelemetry\Instrumentation\hook')) {
+        \OpenTelemetry\Instrumentation\hook(
+            null,
+            $function_name,
+            pre: function ($object, array $params, ?string $class, string $method, ?string $uniqueId) use ($opt) {
+                $track = Tracer::getCurrentSegment();
+                if (isset($opt['pre_exec']) && is_callable($opt['pre_exec'])) {
+                    call_user_func_array($opt['pre_exec'], [&$track, $params]);
+                }
+            },
+            post: function ($object, array $params, $returnValue, ?Throwable $exception, ?string $uniqueId) use ($opt) {
+                $track = Tracer::getCurrentSegment();
+                return resolve($returnValue, $track, $opt, $params, $exception, null, false);
+            }
+        );
+        return;
+    }
+
     if (!function_exists('uopz_set_return')) {
         return;
     }
@@ -169,6 +226,24 @@ function add_hook_function(string $function_name, array $opt)
  */
 function add_hook_method(string $class_name, string $method_name, array $opt)
 {
+    if (function_exists('OpenTelemetry\Instrumentation\hook')) {
+        \OpenTelemetry\Instrumentation\hook(
+            $class_name,
+            $method_name,
+            pre: function ($object, array $params, string $class, string $method, ?string $uniqueId) use ($opt) {
+                $track = Tracer::getCurrentSegment();
+                if (isset($opt['pre_exec']) && is_callable($opt['pre_exec'])) {
+                    call_user_func_array($opt['pre_exec'], [&$track, $params, $object]);
+                }
+            },
+            post: function ($object, array $params, $returnValue, ?Throwable $exception, ?string $uniqueId) use ($opt) {
+                $track = Tracer::getCurrentSegment();
+                return resolve($returnValue, $track, $opt, $params, $exception, $object, false);
+            }
+        );
+        return;
+    }
+
     if (!function_exists('uopz_set_return')) {
         return;
     }
