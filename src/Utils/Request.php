@@ -60,6 +60,7 @@ final class Request
                     'timeout' => self::DEFAULT_TIMEOUT / 1000.0,
                     'connect_timeout' => self::DEFAULT_CONNECTION_TIMEOUT / 1000.0,
                     'allow_redirects' => true,
+                    'verify' => false,
                 ]);
             }
 
@@ -81,7 +82,14 @@ final class Request
         }
 
         try {
-            \GuzzleHttp\Promise\Utils::settle(self::$_promises)->wait();
+            $results = \GuzzleHttp\Promise\Utils::settle(self::$_promises)->wait();
+            foreach ($results as $result) {
+                if (isset($result['state']) && $result['state'] === 'rejected') {
+                    $reason = $result['reason'];
+                    $msg = $reason instanceof \Throwable ? $reason->getMessage() : json_encode($reason);
+                    Logger::get()->error("Async Promise Rejected - " . $msg);
+                }
+            }
         } catch (\Throwable $e) {
             Logger::get()->error("Failure to flush active segments - " . $e->getMessage());
         } finally {

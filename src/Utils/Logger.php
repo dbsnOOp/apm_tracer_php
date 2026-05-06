@@ -83,7 +83,7 @@ final class Logger
     }
 
 
-    public function write(int $level = self::DEBUG, string $message)
+    public function write(int $level, string $message)
     {
         if (!$this->enable($level)) return;
         $date = date(\DateTime::ATOM);

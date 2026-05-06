@@ -82,11 +82,13 @@ class Tracer
 
         register_shutdown_function(function () {
             self::defineEnvirounment();
-            self::$root_tracer->stop();
-            if (function_exists('fastcgi_finish_request')) {
-                fastcgi_finish_request();
+            if (isset(self::$root_tracer) && self::$root_tracer !== null) {
+                self::$root_tracer->stop();
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                self::$root_tracer->finish();
             }
-            self::$root_tracer->finish();
             \dbsnOOp\Utils\Request::flush();
         });
 
