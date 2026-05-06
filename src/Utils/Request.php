@@ -15,7 +15,7 @@ final class Request
     private string $_hash;
     private string $_token;
 
-    private static array $_promises = [];
+
     private static ?\GuzzleHttp\Client $_client = null;
 
     public function __construct()
@@ -68,52 +68,21 @@ final class Request
 
             Logger::get()->debug("Queueing Segment - Host: " . $this->_uri . " - Payload: " . json_encode($payload));
 
-            if (PHP_SAPI === 'cli') {
-                self::$_promises[] = self::$_client->postAsync('https://' . $this->_uri . "/v2/apm/send", [
+            try {
+                $response = self::$_client->post('https://' . $this->_uri . "/v2/apm/send", [
                     'headers' => $this->getHeaders(),
                     'body' => $body,
                 ]);
-            } else {
-                // Em ambiente FPM/Web, enviamos síncrono para garantir envio e logs antes da desconexão
-                try {
-                    $response = self::$_client->post('https://' . $this->_uri . "/v2/apm/send", [
-                        'headers' => $this->getHeaders(),
-                        'body' => $body,
-                    ]);
-                    Logger::get()->debug("APM Request Fulfilled (Sync) - Status: " . $response->getStatusCode() . " - Body: " . (string)$response->getBody());
-                } catch (\Throwable $e) {
-                    Logger::get()->error("APM Request Rejected (Sync) - " . $e->getMessage());
-                }
+                Logger::get()->debug("APM Request Fulfilled - Status: " . $response->getStatusCode() . " - Body: " . (string)$response->getBody());
+            } catch (\Throwable $e) {
+                Logger::get()->error("APM Request Rejected - " . $e->getMessage());
             }
         } catch (\Throwable $e) {
-            Logger::get()->error("Failure to queue async Segment - " . $e->getMessage());
+            Logger::get()->error("Failure to queue Segment - " . $e->getMessage());
         }
     }
 
-    public static function flush()
-    {
-        if (empty(self::$_promises)) {
-            return;
-        }
 
-        try {
-            $results = \GuzzleHttp\Promise\Utils::settle(self::$_promises)->wait();
-            foreach ($results as $result) {
-                if (isset($result['state']) && $result['state'] === 'fulfilled') {
-                    $response = $result['value'];
-                    Logger::get()->debug("APM Request Fulfilled - Status: " . $response->getStatusCode() . " - Body: " . (string)$response->getBody());
-                } else if (isset($result['state']) && $result['state'] === 'rejected') {
-                    $reason = $result['reason'];
-                    $msg = $reason instanceof \Throwable ? $reason->getMessage() : json_encode($reason);
-                    Logger::get()->error("Async Promise Rejected - " . $msg);
-                }
-            }
-        } catch (\Throwable $e) {
-            Logger::get()->error("Failure to flush active segments - " . $e->getMessage());
-        } finally {
-            self::$_promises = [];
-        }
-    }
 
 
     public static function utf8_encode_rec($value)

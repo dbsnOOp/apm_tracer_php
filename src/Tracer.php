@@ -86,7 +86,6 @@ class Tracer
                 self::$root_tracer->stop();
                 self::$root_tracer->finish();
             }
-            \dbsnOOp\Utils\Request::flush();
             if (function_exists('fastcgi_finish_request')) {
                 ignore_user_abort(true);
                 fastcgi_finish_request();
