@@ -27,7 +27,7 @@ function resolve_default($result, &$track, $opt, $args, $exception = null, &$tha
         throw $exception;
 }
 
-function resolve_promise($type, $result, &$track, $opt, $args, &$that = null, $do_close)
+function resolve_promise($type, $result, &$track, $opt, $args, $exception, &$that, $do_close)
 {
     if ($type == 'guzzle') {
         $r = new Promise();
